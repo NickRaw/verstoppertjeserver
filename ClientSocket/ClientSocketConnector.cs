@@ -183,7 +183,7 @@ namespace ClientSocket
         {
             // Convert the string data to byte data using ASCII encoding.  
             byte[] byteData = Encoding.ASCII.GetBytes(data);
-
+            Console.WriteLine(sockclient.AddressFamily);
             // Begin sending the data to the remote device.  
             sockclient.BeginSend(byteData, 0, byteData.Length, 0,
                 new AsyncCallback(SendCallback), sockclient);
