@@ -55,6 +55,7 @@ public interface ISocket
 
     static void testMessage()
     {
+        Console.WriteLine(clientSocket.PrepareSendMessage("{'connectionType':'connectionTest'}"));
         ClientSocketConnector.Send(clientSocket.Client, clientSocket.PrepareSendMessage("{'connectionType':'connectionTest'}"));
     }
 }
