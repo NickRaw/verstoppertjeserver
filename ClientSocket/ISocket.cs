@@ -52,4 +52,9 @@ public interface ISocket
     static void seekerdone(int gameid) { }
 
     static void changeplayertype(int gameid) { }
+
+    static void testMessage()
+    {
+        ClientSocketConnector.Send(clientSocket.Client, clientSocket.PrepareSendMessage("{'connectionType':'connectionTest'}"));
+    }
 }

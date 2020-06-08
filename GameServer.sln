@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DomoticzAPILibrary", "Domot
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClientSocket", "ClientSocket\ClientSocket.csproj", "{B87615C0-85C1-4565-9EAE-24C5523B6F2F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClientTestApp", "E:\Console\ClientTestApp\ClientTestApp\ClientTestApp.csproj", "{5791FAFA-AA3B-4391-94EB-2B87810C4AB4}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,10 +27,6 @@ Global
 		{B87615C0-85C1-4565-9EAE-24C5523B6F2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B87615C0-85C1-4565-9EAE-24C5523B6F2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B87615C0-85C1-4565-9EAE-24C5523B6F2F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{5791FAFA-AA3B-4391-94EB-2B87810C4AB4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5791FAFA-AA3B-4391-94EB-2B87810C4AB4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5791FAFA-AA3B-4391-94EB-2B87810C4AB4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5791FAFA-AA3B-4391-94EB-2B87810C4AB4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

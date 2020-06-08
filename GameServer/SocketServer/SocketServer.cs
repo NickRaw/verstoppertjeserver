@@ -16,10 +16,10 @@ namespace GameServer.SocketServer
     {
         private int portnumber;
         private IPAddress ipaddress;
-        private bool doneListening = false;
         public static ManualResetEvent allDone = new ManualResetEvent(false);
         public static List<Player> loggedInClients = new List<Player>();
         public static List<(string, Socket)> loggedInSockets = new List<(string, Socket)>();
+        public static Socket listener;
 
         public static string PrepareSendMessage(string message)
         {
@@ -32,13 +32,13 @@ namespace GameServer.SocketServer
             portnumber = _portnumber;
         }
 
-        public async Task StartListening()
+        public async Task StartSocket()
         {
             // Establish local endpoint for the socket.
             IPEndPoint localEndPoint = new IPEndPoint(ipaddress, portnumber);
 
             // Create TCP/IP Socket
-            Socket listener = new Socket(ipaddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            listener = new Socket(ipaddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
             try
             {
                 await Task.Run(() =>
@@ -46,20 +46,9 @@ namespace GameServer.SocketServer
                     Console.WriteLine("Start listening...");
                     listener.Bind(localEndPoint);
                     listener.Listen(100);
-                    allDone.Reset();
 
-                    Console.WriteLine("Listening...");
-                    // Start an asynchronous socket to listen for connections.
-                    listener.BeginAccept(
-                        new AsyncCallback(AcceptCallback),
-                        listener);
+                    StartListening();
 
-                    while (true)
-                    {
-                        // Wait until a connection is made before continuing.
-                        allDone.WaitOne();
-                    }
-                    
                 });
             }
             catch(Exception e)
@@ -71,10 +60,17 @@ namespace GameServer.SocketServer
             
         }
 
-        public void StopListening()
+        public static void StartListening()
         {
-            doneListening = true;
             allDone.Reset();
+            Console.WriteLine("Listening...");
+            // Start an asynchronous socket to listen for connections.
+            listener.BeginAccept(
+                new AsyncCallback(AcceptCallback),
+                listener);
+
+            // Wait until a connection is made before continuing.
+            allDone.WaitOne();
         }
 
         public static void AcceptCallback(IAsyncResult ar)
@@ -89,7 +85,6 @@ namespace GameServer.SocketServer
             // Create the state object.  
             StateObject state = new StateObject();
             state.workSocket = handler;
-            Console.WriteLine(handler.Connected);
             handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
                 new AsyncCallback(ReadCallback), state);
         }
@@ -116,12 +111,13 @@ namespace GameServer.SocketServer
                 if (content.IndexOf("<EOF>") > -1)
                 {
                     String stringContent = content.Substring(0, content.Length - 5);
-                    
                     JObject jsonObject = JObject.Parse(stringContent);
 
                     // We found all the data so we can display it all to the console and do something with it.
                     CustomConsole.CustomLogWrites.LogWriter($"Client {handler.RemoteEndPoint}: Sends {content.Length} bytes from socket. \n Data : {content.Replace("<EOF>", "")}");
-                    CallbackHandler(content.Replace("<EOF>", ""), handler);
+                    Send(handler, PrepareSendMessage(content));
+                    //CallbackHandler(content.Replace("<EOF>", ""), handler);
+                    StartListening();
                 }
                 else
                 {
