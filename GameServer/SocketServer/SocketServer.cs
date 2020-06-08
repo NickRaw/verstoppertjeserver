@@ -3,6 +3,7 @@ using GameServer.GameLogic.Models;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection.Metadata;
@@ -12,150 +13,91 @@ using System.Threading.Tasks;
 
 namespace GameServer.SocketServer
 {
+    // State object for reading client data asynchronously  
+    public class StateObject
+    {
+        // Client  socket.  
+        public Socket workSocket = null;
+        // Size of receive buffer.  
+        public const int BufferSize = 1024;
+        // Receive buffer.  
+        public byte[] buffer = new byte[BufferSize];
+        // Received data string.  
+        public StringBuilder sb = new StringBuilder();
+    }
+
     public class SocketServer
     {
-        private int portnumber;
-        private IPAddress ipaddress;
-        public static ManualResetEvent allDone = new ManualResetEvent(false);
-        public static List<Player> loggedInClients = new List<Player>();
-        public static List<(string, Socket)> loggedInSockets = new List<(string, Socket)>();
-        public static Socket listener;
-
-        public static string PrepareSendMessage(string message)
+        public static List<(string, TcpClient)> loggedInSockets = new List<(string, TcpClient)>();
+        private static TcpListener listener;
+        public SocketServer()
         {
-            return message + "<EOF>";
-        }
-
-        public SocketServer(string _ipaddress, int _portnumber)
-        {
-            ipaddress = IPAddress.Parse(_ipaddress);
-            portnumber = _portnumber;
-        }
-
-        public async Task StartSocket()
-        {
-            // Establish local endpoint for the socket.
-            IPEndPoint localEndPoint = new IPEndPoint(ipaddress, portnumber);
-
-            // Create TCP/IP Socket
-            listener = new Socket(ipaddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            try
-            {
-                await Task.Run(() =>
-                {
-                    Console.WriteLine("Start listening...");
-                    listener.Bind(localEndPoint);
-                    listener.Listen(100);
-
-                    while (true)
-                    {
-                        StartListening();
-                    }
-                    
-                });
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e.ToString());
-            }
-                        
         }
 
         public static void StartListening()
         {
-            allDone.Reset();
-            Console.WriteLine("Listening...");
-            // Start an asynchronous socket to listen for connections.
-            listener.BeginAccept(
-                new AsyncCallback(AcceptCallback),
-                listener);
+            
 
-            // Wait until a connection is made before continuing.
-            allDone.WaitOne();
-        }
+            IPAddress ipAddress = IPAddress.Parse("192.168.2.8");
 
-        public static void AcceptCallback(IAsyncResult ar)
-        {
-            Console.WriteLine("ACCEPT CALLBACK triggered");
-            // Signal the main thread to continue.  
-            allDone.Set();
+            // Create a TCP/IP socket.  
+            listener = new TcpListener(ipAddress, 34000);
 
-            // Get the socket that handles the client request.  
-            Socket listener = (Socket)ar.AsyncState;
-            Socket handler = listener.EndAccept(ar);
-
-            // Create the state object.  
-            StateObject state = new StateObject();
-            state.workSocket = handler;
-            handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                new AsyncCallback(ReadCallback), state);
-        }
-
-        public static void ReadCallback(IAsyncResult ar)
-        {
-            Console.WriteLine("READ CALLBACK triggered");
-            String content = String.Empty;
-
-            // Retrieve the state object and the handler socket
-            // from the asynchronous state object.
-            StateObject state = (StateObject)ar.AsyncState;
-            Socket handler = state.workSocket;
-
-            // Read data from the client socket.
-            int bytesRead = handler.EndReceive(ar);
-
-            if (bytesRead > 0)
-            {
-                // There might be more data, so store the data received so far.
-                state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
-
-                //Check for end-of-file tag. If it is not there, read more data
-                content = state.sb.ToString();
-                if (content.IndexOf("<EOF>") > -1)
-                {
-                    String stringContent = content.Substring(0, content.Length - 5);
-                    JObject jsonObject = JObject.Parse(stringContent);
-
-                    // We found all the data so we can display it all to the console and do something with it.
-                    CustomConsole.CustomLogWrites.LogWriter($"Client {handler.RemoteEndPoint}: Sends {content.Length} bytes from socket. \n Data : {content.Replace("<EOF>", "")}");
-                    Send(handler, PrepareSendMessage(content));
-                    //CallbackHandler(content.Replace("<EOF>", ""), handler);
-                    loggedInSockets.Add(("Client"+loggedInSockets.Count, handler));
-                    StartListening();
-                }
-                else
-                {
-                    // We don't have all the data, so keep looking.
-                    handler.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                        new AsyncCallback(ReadCallback), state);
-                }
-            }
-        }
-
-        public static void Send(Socket handler, String data)
-        {
-            // Convert the string data to byte data using ASCII encoding.  
-            byte[] byteData = Encoding.ASCII.GetBytes(data);
-
-            // Begin sending the data to the remote device.  
-            handler.BeginSend(byteData, 0, byteData.Length, 0,
-                new AsyncCallback(SendCallback), handler);
-        }
-
-        private static void SendCallback(IAsyncResult ar)
-        {
+            // Bind the socket to the local endpoint and listen for incoming connections.  
             try
             {
-                // Retrieve the socket from the state object.  
-                Socket handler = (Socket)ar.AsyncState;
+                listener.Start();
+                
+                while (true)
+                {
+                    Console.WriteLine("Listening...");
+                    // Listen to tcpclients
+                    TcpClient client = listener.AcceptTcpClient();
+                    Console.WriteLine("Client " + client.Client.RemoteEndPoint + " connected");
 
-                // Complete sending the data to the remote device.  
-                int bytesSent = handler.EndSend(ar);
-                Console.WriteLine("Sent {0} bytes to client.", bytesSent);
+                    ThreadPool.QueueUserWorkItem(ThreadProc, client);
 
-                //handler.Shutdown(SocketShutdown.Both); //PROBLEEM DIE ERVOOR ZORGDE DAT DE CLIENTS NIET MEER MET DE SOCKETS VERBONDEN
-                //handler.Close(); //PROBLEEM DIE ERVOOR ZORGDE DAT DE CLIENTS NIET MEER MET DE SOCKETS VERBONDEN
+                    
+                }
 
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.ToString());
+            }
+
+        }
+
+        private static string ReadCallBack(NetworkStream stream)
+        {
+            byte[] buffer = new byte[1024];
+            stream.Read(buffer, 0, buffer.Length);
+            int recv = 0;
+            foreach (byte b in buffer)
+            {
+                if (b != 0)
+                {
+                    recv++;
+                }
+            }
+            return Encoding.UTF8.GetString(buffer, 0, recv);
+        }
+
+        private static void ThreadProc(object obj)
+        {
+            var client = (TcpClient)obj;
+            NetworkStream stream = client.GetStream();
+            StreamReader reader = new StreamReader(client.GetStream());
+            StreamWriter writer = new StreamWriter(client.GetStream());
+            try
+            {
+                while (client.Connected)
+                {
+                    string request = ReadCallBack(stream);
+                    Console.WriteLine("Client send: " + request);
+                    CallbackHandler(client, request);
+                }
+                
             }
             catch (Exception e)
             {
@@ -163,39 +105,20 @@ namespace GameServer.SocketServer
             }
         }
 
-        public void GetAllClients() 
-        { 
-            foreach((string name, Socket client) in loggedInSockets)
-            {
-                Console.WriteLine(name + " : " + client);
-            }
-        }
-        
-        public static Socket GetClient(String _name)
+        public static void Send(TcpClient client, string data)
         {
-            foreach((string name, Socket client) in loggedInSockets)
-            {
-                if (_name == name)
-                {
-                    return client;
-                }
-            }
-            return null;
+            StreamWriter writer = new StreamWriter(client.GetStream());
+            writer.WriteLine(data);
+            writer.Flush();
         }
 
         public static JObject ConvertCallbackMsg(String msg)
         {
             JObject json = JObject.Parse(msg);
-            /*Dictionary<String, String> finalMsg = new Dictionary<string, string>();
-            foreach(String mes in msg.Split(","))
-            {
-                String[] cont = mes.Split(":");
-                finalMsg.Add(cont[0], cont[1]);
-            }*/
             return json;
         }
 
-        public static void CallbackHandler(string content, Socket clientSocket)
+        public static void CallbackHandler(TcpClient clientSocket, string content)
         {
             Console.WriteLine(content);
             JObject jsonConvert = ConvertCallbackMsg(content);
@@ -203,8 +126,8 @@ namespace GameServer.SocketServer
             switch (jsonConvert["connectionType"].ToString())
             {
                 case "login":
-                    CustomConsole.CustomLogWrites.LogWriter("User wants to login\nUsername: "+ jsonConvert["clientname"].ToString() +" Password: "+ jsonConvert["password"].ToString());
-                    Send(clientSocket, PrepareSendMessage("{'connectionType':'loginResponse'}"));
+                    CustomConsole.CustomLogWrites.LogWriter("User wants to login\nUsername: " + jsonConvert["clientname"].ToString() + " Password: " + jsonConvert["password"].ToString());
+                    Send(clientSocket, "{'connectionType':'loginResponse'}");
                     /*Player loginPlayer = GetClient(jsonConvert["clientname"].ToString());
                     if(loginPlayer != null)
                     {
@@ -218,22 +141,22 @@ namespace GameServer.SocketServer
                     bool registed = DAL.DataAccessLayer.NewUser(jsonConvert["clientname"].ToString(), jsonConvert["password"].ToString());
                     if (registed)
                     {
-                        Send(clientSocket, PrepareSendMessage("{'connectionType':'registerResponse','registerStatus':'success','responseMessage':'You are now registered. Login to start gaming'}"));
+                        Send(clientSocket, "{'connectionType':'registerResponse','registerStatus':'success','responseMessage':'You are now registered. Login to start gaming'}");
                     }
                     else
                     {
-                        Send(clientSocket, PrepareSendMessage("{'connectionType':'registerResponse','registerStatus':'usernamefail','responseMessage':'Registration failed! Username not correct'}"));
+                        Send(clientSocket, "{'connectionType':'registerResponse','registerStatus':'usernamefail','responseMessage':'Registration failed! Username not correct'}");
                     }
                     break;
                 case "gamecreate":
                     // GET PLAYER THATS WANTS TO CREATE A NEW GAME
                     Console.WriteLine("Creating new game for player");
                     Player loggedInPlayer = DAL.DataAccessLayer.GetUser(jsonConvert["clientname"].ToString(), jsonConvert["password"].ToString());
-                    if(loggedInPlayer != null)
+                    if (loggedInPlayer != null)
                     {
                         GameSession newSession = new GameSession(loggedInPlayer);
                         GameLogic.GameLogic.AddNewSession(newSession);
-                        Send(loggedInPlayer.Socket, "{ 'roomId':"+ newSession.Id.ToString()+ "}");
+                        Send(clientSocket, "{ 'roomId':" + newSession.Id.ToString() + "}");
                         CustomConsole.CustomLogWrites.LogWriter("Created new room with number " + GameLogic.GameLogic.GetSessionByUser(loggedInPlayer).Id.ToString() + " for player " + loggedInPlayer.Playername);
                     }
                     break;
@@ -272,25 +195,13 @@ namespace GameServer.SocketServer
                     break;
                 case "connectionTest":
                     Console.WriteLine("Client trying to connect");
-                    loggedInSockets.Add(("Client"+loggedInSockets.Count,clientSocket));
-                    Send(clientSocket, PrepareSendMessage("{'connectionType':'testResponse'}"));
+                    //loggedInSockets.Add(("Client" + loggedInSockets.Count, clientSocket));
+                    Send(clientSocket, "{'connectionType':'testResponse'}");
                     break;
             }
+            Console.WriteLine("End of function...");
+
         }
-
     }
-
-    // State object for reading client data asynchronously  
-    public class StateObject
-    {
-        // Client  socket.  
-        public Socket workSocket = null;
-        // Size of receive buffer.  
-        public const int BufferSize = 1024;
-        // Receive buffer.  
-        public byte[] buffer = new byte[BufferSize];
-        // Received data string.  
-        public StringBuilder sb = new StringBuilder();
-    }
-
 }
+

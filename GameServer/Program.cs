@@ -54,9 +54,9 @@ namespace GameServer
             }
 
             // STARTING SOCKETSERVER
-            CustomLogWrites.LogWriter("Socket server aanmaken");
-            SocketServer.SocketServer socketserver = new SocketServer.SocketServer(ipaddress, portnumber);
-            CustomLogWrites.LogWriter("Socket server aangemaakt op ipaddress: " + ipaddress + " en poort " + portnumber.ToString());
+            //CustomLogWrites.LogWriter("Socket server aanmaken");
+            
+            //CustomLogWrites.LogWriter("Socket server aangemaakt op ipaddress: " + ipaddress + " en poort " + portnumber.ToString());
 
 
             // Console for executing commands
@@ -71,9 +71,9 @@ namespace GameServer
               ("triggerSensor","Triggert een sensor", () => SensorSwitch(true)),
               ("sensorOn","Zet sensor aan", () => SensorSwitch(true)),
               ("sensorOff","Zet sensor uit", () => SensorSwitch(false)),
-              ("startSocket","Zet socket server aan", () => socketserver.StartSocket()),
-              ("getClients","Geeft alle verbonden clients terug", () => socketserver.GetAllClients()),
-              ("sendTestMessage","Stuurt bericht naar client", () => SendTestMessage(socketserver)),
+              ("startSocket","Zet socket server aan", () => SocketServer.SocketServer.StartListening()),
+              ("getClients","Geeft alle verbonden clients terug", () => Environment.Exit(0)),
+              ("sendTestMessage","Stuurt bericht naar client", () => Environment.Exit(0)),
               ("createDatabase", "Maak een nieuwe database", () => DataAccessLayer.DatabaseInitializer()),
               ("getUser", "Haal gebruiker op", () => GetAUser()),
               ("newUser", "Maak een nieuwe gebruiker aan", () => MakeNewUser()),
@@ -195,8 +195,8 @@ namespace GameServer
                 String clientname = Console.ReadLine();
                 Console.WriteLine("Welk bericht wil je versturen");
                 String message = Console.ReadLine();
-                Socket socket = SocketServer.SocketServer.GetClient(clientname);
-                SocketServer.SocketServer.Send(socket, message);
+                //Socket socket = SocketServer.SocketServer.GetClient(clientname);
+                //SocketServer.SocketServer.Send(socket, message);
             }
 
             /*
