@@ -47,17 +47,18 @@ namespace GameServer.SocketServer
                     listener.Bind(localEndPoint);
                     listener.Listen(100);
 
-                    StartListening();
-
+                    while (true)
+                    {
+                        StartListening();
+                    }
+                    
                 });
             }
             catch(Exception e)
             {
                 Console.WriteLine(e.ToString());
             }
-
-            Console.WriteLine("Socket gesloten...");
-            
+                        
         }
 
         public static void StartListening()
@@ -75,6 +76,7 @@ namespace GameServer.SocketServer
 
         public static void AcceptCallback(IAsyncResult ar)
         {
+            Console.WriteLine("ACCEPT CALLBACK triggered");
             // Signal the main thread to continue.  
             allDone.Set();
 
@@ -91,6 +93,7 @@ namespace GameServer.SocketServer
 
         public static void ReadCallback(IAsyncResult ar)
         {
+            Console.WriteLine("READ CALLBACK triggered");
             String content = String.Empty;
 
             // Retrieve the state object and the handler socket
@@ -117,6 +120,7 @@ namespace GameServer.SocketServer
                     CustomConsole.CustomLogWrites.LogWriter($"Client {handler.RemoteEndPoint}: Sends {content.Length} bytes from socket. \n Data : {content.Replace("<EOF>", "")}");
                     Send(handler, PrepareSendMessage(content));
                     //CallbackHandler(content.Replace("<EOF>", ""), handler);
+                    loggedInSockets.Add(("Client"+loggedInSockets.Count, handler));
                     StartListening();
                 }
                 else
