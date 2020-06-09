@@ -7,7 +7,7 @@ public interface ISocket
 {
     public static void StartSocket(string ipaddress, int portnumber)
     {
-        ClientSocketConnector.PrepareConnector("192.168.2.8", 34000);
+        ClientSocketConnector.PrepareConnector(ipaddress, portnumber);
         ResponseListener();
 
     }
@@ -32,6 +32,11 @@ public interface ISocket
     static void login(string username, string password) 
     {
         ClientSocketConnector.Send("{'connectionType':'login', 'username': '" + username + "', 'password':'" + password + "'}");
+    }
+
+    static void logout(string username)
+    {
+        ClientSocketConnector.Send("{'connectionType':'logout','username':'" + username + "'}");
     }
 
     static void register(string username, string password) 

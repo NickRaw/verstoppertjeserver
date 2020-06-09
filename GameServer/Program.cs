@@ -30,7 +30,7 @@ namespace GameServer
             Dictionary<String, String> settings = DataAccessLayer.getSettings();
 
             // SOCKETSERVER IP AND PORT
-            String ipaddress = settings["SERVER_IP"];
+            string ipaddress = settings["SERVER_IP"];
             int portnumber = Int32.Parse(settings["SERVER_PORT"]);
 
             // DOMOTICZSERVER IP AND TESTCONNECTION
@@ -54,9 +54,9 @@ namespace GameServer
             }
 
             // STARTING SOCKETSERVER
-            //CustomLogWrites.LogWriter("Socket server aanmaken");
-            
-            //CustomLogWrites.LogWriter("Socket server aangemaakt op ipaddress: " + ipaddress + " en poort " + portnumber.ToString());
+            CustomLogWrites.LogWriter("Socket server aanmaken");
+            SocketServer.SocketServer.PrepareSocket(ipaddress, portnumber);
+            CustomLogWrites.LogWriter("Socket server aangemaakt op ipaddress: " + ipaddress + " en poort " + portnumber.ToString());
 
 
             // Console for executing commands
@@ -72,8 +72,8 @@ namespace GameServer
               ("sensorOn","Zet sensor aan", () => SensorSwitch(true)),
               ("sensorOff","Zet sensor uit", () => SensorSwitch(false)),
               ("startSocket","Zet socket server aan", () => SocketServer.SocketServer.StartListening()),
-              ("getClients","Geeft alle verbonden clients terug", () => Environment.Exit(0)),
-              ("sendTestMessage","Stuurt bericht naar client", () => Environment.Exit(0)),
+              ("getClients","Geeft alle verbonden clients terug", () => SocketServer.SocketServer.GetConnectedClients()),
+              ("sendTestMessage","Stuurt bericht naar client", () => SendTestMessage()),
               ("createDatabase", "Maak een nieuwe database", () => DataAccessLayer.DatabaseInitializer()),
               ("getUser", "Haal gebruiker op", () => GetAUser()),
               ("newUser", "Maak een nieuwe gebruiker aan", () => MakeNewUser()),
@@ -189,14 +189,11 @@ namespace GameServer
              SOCKETSERVER COMMANDS
              */
 
-            static void SendTestMessage(SocketServer.SocketServer serverSocket)
+            static void SendTestMessage()
             {
                 Console.WriteLine("Geef aan welke client je wil testen. (Voorbeeld: Client 0)");
-                String clientname = Console.ReadLine();
-                Console.WriteLine("Welk bericht wil je versturen");
-                String message = Console.ReadLine();
-                //Socket socket = SocketServer.SocketServer.GetClient(clientname);
-                //SocketServer.SocketServer.Send(socket, message);
+                string clientname = Console.ReadLine();
+                SocketServer.SocketServer.Send(SocketServer.SocketServer.GetSingleClient(clientname), "{'connectionType':'responseTest'}");
             }
 
             /*

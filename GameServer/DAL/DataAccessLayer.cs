@@ -9,14 +9,14 @@ namespace GameServer.DAL
 {
     public static class DataAccessLayer
     {
-        public static Dictionary<String, String> getSettings()
+        public static Dictionary<string, string> getSettings()
         {
-            Dictionary<String, String> settings = new Dictionary<String, String>();
+            Dictionary<string, string> settings = new Dictionary<String, String>();
 
             string[] lines = File.ReadAllLines("Settings.txt");
             foreach(string line in lines)
             {
-                String[] splitLines = line.Split("=");
+                string[] splitLines = line.Split("=");
                 settings.Add(splitLines[0], splitLines[1]);
                 
             }
@@ -37,7 +37,7 @@ namespace GameServer.DAL
 
         }
 
-        public static bool NewUser(String username, String password) 
+        public static bool NewUser(string username, string password) 
         {
             using (var conn = new SQLiteConnection("Data Source = users.db; Version = 3; "))
             {
@@ -73,7 +73,7 @@ namespace GameServer.DAL
             }
         }
 
-        public static Player GetUser(String username, String password) 
+        public static Player GetUser(string username, string password) 
         {
             using (var conn = new SQLiteConnection("Data Source = users.db; Version = 3; "))
             {
@@ -93,7 +93,7 @@ namespace GameServer.DAL
             }
         }
 
-        public static void ChangeUser(String old_username, String old_password, String new_username = null, String new_password = null) 
+        public static void ChangeUser(string old_username, string old_password, string new_username = null, string new_password = null) 
         {
             using (var conn = new SQLiteConnection("Data Source = users.db; Version = 3; "))
             {
@@ -106,7 +106,7 @@ namespace GameServer.DAL
                 using SQLiteDataReader rdr = cmd.ExecuteReader();
                 while (rdr.Read())
                 {
-                    String changeSQL = new_username == null ? "UPDATE users SET password = @newPassword WHERE username = @username AND password = @password" : "UPDATE users SET username = @newUsername WHERE username = @username AND password = @password";
+                    string changeSQL = new_username == null ? "UPDATE users SET password = @newPassword WHERE username = @username AND password = @password" : "UPDATE users SET username = @newUsername WHERE username = @username AND password = @password";
                     using var cmd_2 = new SQLiteCommand(changeSQL, conn);
                     cmd_2.Parameters.AddWithValue(new_username == null ? "@newPassword" : "@newUsername", new_username == null ? new_password : new_username);
                     cmd_2.Parameters.AddWithValue("@username", old_username);
@@ -118,7 +118,7 @@ namespace GameServer.DAL
             }
         }
 
-        public static void DeleteUser(String username, String password)
+        public static void DeleteUser(string username, string password)
         {
             using(var conn = new SQLiteConnection("Data Source = users.db; Version = 3; "))
             {
