@@ -88,10 +88,11 @@ namespace DomoticzAPILibrary
 
                     foreach(Floorplan room in allRooms)
                     {
-                        if (room.Name.Contains(floorName))
+                        if (room.Name.Contains("Room"))
                         {
                             floorRooms.Add(room);
                         }
+                        
                     }
 
                     return (floorRooms, null);

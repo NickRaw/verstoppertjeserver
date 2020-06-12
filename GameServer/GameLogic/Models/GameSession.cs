@@ -9,10 +9,29 @@ namespace GameServer.GameLogic.Models
         private int id;
         private Player hider = null;
         private Player seeker = null;
+        private List<string> runRooms = new List<string>();
 
         public Player Hider { get => hider; set => hider = value; }
         public Player Seeker { get => seeker; set => seeker = value; }
         public int Id { get => id; }
+        public string GetRooms() 
+        {
+            string strRooms = "";
+            Console.WriteLine("RUNROOMS: " + runRooms.Count);
+            strRooms = strRooms + runRooms[0];
+
+            for(int i = 1; i < runRooms.Count; i++)
+            {
+                strRooms += "," + runRooms[i];
+            }
+            
+            return strRooms;
+        }
+        public void AddToRunRooms(string room)
+        {
+            Console.WriteLine("Added room " + room + "to the list");
+            runRooms.Add(room);
+        }
 
         public GameSession(Player player) 
         {
