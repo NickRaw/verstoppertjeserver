@@ -27,7 +27,9 @@ namespace GameServer
              STARTUP
              */
 
+            // SETTINGS FILE
             Dictionary<String, String> settings = DataAccessLayer.getSettings();
+
 
             // SOCKETSERVER IP AND PORT
             string ipaddress = settings["SERVER_IP"];
@@ -57,7 +59,7 @@ namespace GameServer
             CustomLogWrites.LogWriter("Socket server aanmaken");
             SocketServer.SocketServer.PrepareSocket(ipaddress, portnumber);
             CustomLogWrites.LogWriter("Socket server aangemaakt op ipaddress: " + ipaddress + " en poort " + portnumber.ToString());
-
+            //SocketServer.SocketServer.StartListening();
 
             // Console for executing commands
 
@@ -81,6 +83,7 @@ namespace GameServer
               ("deleteUser", "Verwijder een bestaande gebruiker", () => DeleteAUser())
 
             };
+
 
             bool done = false;
             while(!done)
