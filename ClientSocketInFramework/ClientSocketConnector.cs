@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace ClientSocket
+namespace ClientSocketInFramework
 {
     public static class ClientSocketConnector
     {
@@ -40,7 +40,7 @@ namespace ClientSocket
                 while (haveToListen)
                 {
                     string response = sr.ReadLine();
-                    responseQueue.Add(response);
+                    Console.WriteLine(response);
                 }
             });
         }
